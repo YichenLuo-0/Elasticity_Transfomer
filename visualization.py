@@ -51,8 +51,8 @@ def main():
     x, y = generate_points(l)
     bc = generate_bc(x, y, l, q0)
 
-    x = torch.tensor(x, dtype=torch.float32).view(-1, 1).unsqueeze(0).requires_grad_(True)
-    y = torch.tensor(y, dtype=torch.float32).view(-1, 1).unsqueeze(0).requires_grad_(True)
+    x = torch.tensor(x, dtype=torch.float32).view(-1, 1).unsqueeze(0)
+    y = torch.tensor(y, dtype=torch.float32).view(-1, 1).unsqueeze(0)
     bc = torch.tensor(bc, dtype=torch.float32).unsqueeze(0)
 
     # pinn = PinnsFormer(d_model=64, d_hidden=64, N=4, heads=2)
@@ -69,9 +69,9 @@ def main():
     sigma_y_gt = sigma_y_gt.view(-1).detach().numpy()
     tau_xy_gt = tau_xy_gt.view(-1).detach().numpy()
 
-    loss_sigma_x = sigma_x - sigma_x_gt
-    loss_sigma_y = sigma_y - sigma_y_gt
-    loss_tau_xy = tau_xy - tau_xy_gt
+    loss_sigma_x = np.abs(sigma_x - sigma_x_gt)
+    loss_sigma_y = np.abs(sigma_y - sigma_y_gt)
+    loss_tau_xy = np.abs(tau_xy - tau_xy_gt)
 
     generate_fig(x, y, sigma_x, sigma_y, tau_xy)
     plt.show()
