@@ -46,17 +46,17 @@ def ground_truth(x, y, l, q0):
 
 def main():
     l = 2.0
-    q0 = 15
+    q0 = 20
 
     x, y = generate_points(l)
     bc = generate_bc(x, y, l, q0)
 
-    x = torch.tensor(x, dtype=torch.float32).view(-1, 1).unsqueeze(0)
-    y = torch.tensor(y, dtype=torch.float32).view(-1, 1).unsqueeze(0)
+    x = torch.tensor(x, dtype=torch.float32).view(-1, 1).unsqueeze(0).requires_grad_(True)
+    y = torch.tensor(y, dtype=torch.float32).view(-1, 1).unsqueeze(0).requires_grad_(True)
     bc = torch.tensor(bc, dtype=torch.float32).unsqueeze(0)
 
-    pinn = PinnsFormer(d_model=64, d_hidden=64, N=4, heads=2)
-    # pinn = torch.load("./pinn.pth")
+    # pinn = PinnsFormer(d_model=64, d_hidden=64, N=4, heads=2)
+    pinn = torch.load("./pinn.pth").cpu()
     sigma_x, sigma_y, tau_xy = pinn(x, y, bc)
     sigma_x_gt, sigma_y_gt, tau_xy_gt = ground_truth(x, y, l, q0)
 

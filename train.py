@@ -41,14 +41,14 @@ def main():
         bc.append(bc_)
     bc = torch.tensor(bc, dtype=torch.float32, requires_grad=False)
 
-    # 转换为PyTorch张量并设置 requires_grad=True
+    # 转换为PyTorch张量
     x = torch.tensor(x, dtype=torch.float32).view(-1, 1)
     y = torch.tensor(y, dtype=torch.float32).view(-1, 1)
     x_copy = x.repeat(dataset_num, 1, 1).requires_grad_(False)
     y_copy = y.repeat(dataset_num, 1, 1).requires_grad_(False)
 
     # 初始化网络和优化器
-    pinn = PinnsFormer(d_model=64, d_hidden=64, N=4, heads=2).to(device)
+    pinn = PinnsFormer(d_model=64, d_hidden=64, N=2, heads=2).to(device)
     optimizer = LBFGS(pinn.parameters(), lr=1e-1, line_search_fn='strong_wolfe')
     loss_func = PinnLoss()
 

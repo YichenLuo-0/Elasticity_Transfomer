@@ -5,6 +5,7 @@ def generate_points(l, point_num=50):
     x_train, y_train = np.meshgrid(np.linspace(0, l, point_num), np.linspace(0, l, point_num))
     x_train = x_train.flatten()
     y_train = y_train.flatten()
+
     train_mask = y_train <= x_train
     x_train = x_train[train_mask]
     y_train = y_train[train_mask]
@@ -31,9 +32,9 @@ def generate_bc(x, y, l, q0):
 
         # Face AC
         elif y_idx == x_idx:
-            l = -1 / np.sqrt(2)
-            m = 1 / np.sqrt(2)
-            bc[i] = np.array([l, m, 0, 0, 1])
+            l_ = -1 / np.sqrt(2)
+            m_ = 1 / np.sqrt(2)
+            bc[i] = np.array([l_, m_, 0, 0, 1])
 
         else:
             bc[i] = np.array([0, 0, 0, 0, 0])
