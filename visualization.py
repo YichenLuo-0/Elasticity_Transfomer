@@ -37,6 +37,13 @@ def generate_fig(x, y, sigma_x, sigma_y, tau_xy):
     return fig
 
 
+def ground_truth(x, y, l, q0):
+    sigma_x = -(q0 / l) * (x - (2 * y))
+    sigma_y = (q0 / l) * x
+    tau_xy = (q0 / l) * y
+    return sigma_x, sigma_y, tau_xy
+
+
 def main():
     l = 2.0
     q0 = 15
@@ -51,14 +58,26 @@ def main():
     pinn = PinnsFormer(d_model=64, d_hidden=64, N=4, heads=2)
     # pinn = torch.load("./pinn.pth")
     sigma_x, sigma_y, tau_xy = pinn(x, y, bc)
+    sigma_x_gt, sigma_y_gt, tau_xy_gt = ground_truth(x, y, l, q0)
 
     x = x.view(-1).detach().numpy()
     y = y.view(-1).detach().numpy()
     sigma_x = sigma_x.view(-1).detach().numpy()
     sigma_y = sigma_y.view(-1).detach().numpy()
     tau_xy = tau_xy.view(-1).detach().numpy()
+    sigma_x_gt = sigma_x_gt.view(-1).detach().numpy()
+    sigma_y_gt = sigma_y_gt.view(-1).detach().numpy()
+    tau_xy_gt = tau_xy_gt.view(-1).detach().numpy()
+
+    loss_sigma_x = sigma_x - sigma_x_gt
+    loss_sigma_y = sigma_y - sigma_y_gt
+    loss_tau_xy = tau_xy - tau_xy_gt
 
     generate_fig(x, y, sigma_x, sigma_y, tau_xy)
+    plt.show()
+    generate_fig(x, y, sigma_x_gt, sigma_y_gt, tau_xy_gt)
+    plt.show()
+    generate_fig(x, y, loss_sigma_x, loss_sigma_y, loss_tau_xy)
     plt.show()
 
 
