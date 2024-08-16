@@ -46,7 +46,7 @@ def ground_truth(x, y, l, q0):
 
 def main():
     l = 2.0
-    q0 = 20
+    q0 = 15
 
     x, y = generate_points(l)
     bc = generate_bc(x, y, l, q0)
@@ -69,15 +69,15 @@ def main():
     sigma_y_gt = sigma_y_gt.view(-1).detach().numpy()
     tau_xy_gt = tau_xy_gt.view(-1).detach().numpy()
 
-    loss_sigma_x = np.abs(sigma_x - sigma_x_gt)
-    loss_sigma_y = np.abs(sigma_y - sigma_y_gt)
-    loss_tau_xy = np.abs(tau_xy - tau_xy_gt)
+    err_sigma_x = np.abs(sigma_x - sigma_x_gt)
+    err_sigma_y = np.abs(sigma_y - sigma_y_gt)
+    err_tau_xy = np.abs(tau_xy - tau_xy_gt)
 
     generate_fig(x, y, sigma_x, sigma_y, tau_xy)
     plt.show()
     generate_fig(x, y, sigma_x_gt, sigma_y_gt, tau_xy_gt)
     plt.show()
-    generate_fig(x, y, loss_sigma_x, loss_sigma_y, loss_tau_xy)
+    generate_fig(x, y, err_sigma_x, err_sigma_y, err_tau_xy)
     plt.show()
 
 
