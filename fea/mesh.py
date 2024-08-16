@@ -30,12 +30,12 @@ nodes_array[:, 4] = nodes_array[:, 4] - bound_bc
 
 # Loads
 q0 = -10 / 2
-bound_ab = nodes_array[:, 2] == 0
+bound_ab = (nodes_array[:, 2] == 0) & (nodes_array[:, 1] != 2)
 id_ab = nodes_array[:, 0][bound_ab]
 q0_ab = nodes_array[:, 1][bound_ab] / 2 * q0
 n_ab = len(id_ab)
 
-bound_ac = nodes_array[:, 1] == nodes_array[:, 2]
+bound_ac = (nodes_array[:, 1] == nodes_array[:, 2]) & (nodes_array[:, 1] != 0) & (nodes_array[:, 1] != 2)
 id_ac = nodes_array[:, 0][bound_ac]
 n_ac = len(id_ac)
 
