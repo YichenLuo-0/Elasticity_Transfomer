@@ -8,6 +8,15 @@ from pinnsfomer import PinnsFormer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# 三角形边长
+l = 2.0
+# 杨氏模量和泊松比
+E = 201
+nu = 0.3
+# 外力Q的取值范围
+q_min = 10
+q_max = 20
+
 
 def random_choice(dataset_num, batch_size):
     indices = np.zeros(batch_size)
@@ -20,12 +29,6 @@ def random_choice(dataset_num, batch_size):
 
 
 def main():
-    # 三角形边长
-    l = 2.0
-    # 外力Q的取值范围
-    q_min = 10
-    q_max = 20
-
     # 生成数据点
     x, y = generate_points(l)
 
@@ -48,9 +51,9 @@ def main():
     y_copy = y.repeat(dataset_num, 1, 1).requires_grad_(False)
 
     # 初始化网络和优化器
-    pinn = PinnsFormer(d_model=64, d_hidden=64, N=2, heads=2).to(device)
+    pinn = PinnsFormer(d_model=64, d_hidden=64, N=2, heads=2, E=E, nu=nu).to(device)
     optimizer = LBFGS(pinn.parameters(), lr=1e-1, line_search_fn='strong_wolfe')
-    loss_func = PinnLoss()
+    loss_func = PinnLoss(E)
 
     # 训练
     for epoch in range(epochs):
@@ -61,10 +64,11 @@ def main():
         bc_batch = bc[indices].to(device)
 
         def closure():
-            sigma_x, sigma_y, tau_xy = pinn(x_batch, y_batch, bc_batch)
-            loss = loss_func(x_batch, y_batch, sigma_x, sigma_y, tau_xy, bc_batch)
+            # 前向传播
+            u, v, epsilon_x, epsilon_y, gamma_xy, sigma_x, sigma_y, tau_xy = pinn(x_batch, y_batch, bc_batch)
+            # 计算损失
+            loss = loss_func(x_batch, y_batch, u, v, sigma_x, sigma_y, tau_xy, bc_batch)
             print("Epoch: ", epoch, ", Loss: ", loss.cpu().detach().numpy())
-
             # 梯度下降
             optimizer.zero_grad()
             loss.backward()

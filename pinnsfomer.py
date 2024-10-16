@@ -92,12 +92,12 @@ class Decoder(nn.Module):
 
 
 class PinnsFormer(nn.Module):
-    def __init__(self, d_model, d_hidden, N, heads):
+    def __init__(self, d_model, d_hidden, N, heads, E, nu):
         super(PinnsFormer, self).__init__()
         self.coord_encoding = nn.Linear(2, d_model)
         self.bc_embedding = nn.Sequential(
             *[
-                nn.Linear(5, d_hidden),
+                nn.Linear(7, d_hidden),
                 WaveAct(),
                 nn.Linear(d_hidden, d_hidden),
                 WaveAct(),
@@ -113,9 +113,13 @@ class PinnsFormer(nn.Module):
                 WaveAct(),
                 nn.Linear(d_hidden, d_hidden),
                 WaveAct(),
-                nn.Linear(d_hidden, 3),
+                nn.Linear(d_hidden, 2),
             ]
         )
+
+        self.E = E
+        self.nu = nu
+        self.G = E / (2 * (1 + nu))
 
     def forward(self, x, y, bc):
         coord = torch.cat([x, y], dim=-1)
@@ -127,7 +131,22 @@ class PinnsFormer(nn.Module):
         d_output = self.decoder(coord_src, e_outputs)
         output = self.linear_out(d_output)
 
-        sigma_x = output[:, :, 0:1]
-        sigma_y = output[:, :, 1:2]
-        tau_xy = output[:, :, 2:3]
-        return sigma_x, sigma_y, tau_xy
+        u = output[:, :, 0:1]
+        v = output[:, :, 1:2]
+
+        # Calculate the derivatives of the displacement field
+        du_dx = torch.autograd.grad(u, x, grad_outputs=torch.ones_like(x), create_graph=True)[0]
+        du_dy = torch.autograd.grad(u, y, grad_outputs=torch.ones_like(y), create_graph=True)[0]
+        dv_dx = torch.autograd.grad(v, x, grad_outputs=torch.ones_like(x), create_graph=True)[0]
+        dv_dy = torch.autograd.grad(v, y, grad_outputs=torch.ones_like(y), create_graph=True)[0]
+
+        # Calculate the strain
+        epsilon_x = du_dx
+        epsilon_y = dv_dy
+        gamma_xy = du_dy + dv_dx
+
+        # Calculate the stress
+        sigma_x = ((self.E * epsilon_x) + (self.nu * self.E * epsilon_y)) / (1 - (self.nu ** 2))
+        sigma_y = ((self.E * epsilon_y) + (self.nu * self.E * epsilon_x)) / (1 - (self.nu ** 2))
+        tau_xy = self.G * gamma_xy
+        return u, v, epsilon_x, epsilon_y, gamma_xy, sigma_x, sigma_y, tau_xy
