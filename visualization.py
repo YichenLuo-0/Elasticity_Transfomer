@@ -2,8 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from data_generation import generate_points, generate_bc
-from pinnsfomer import PinnsFormer
+from cases.triangle import Triangle
 
 
 def generate_fig(x, y, sigma_x, sigma_y, tau_xy):
@@ -45,11 +44,20 @@ def ground_truth(x, y, l, q0):
 
 
 def main():
+    # 弹性体属性
     l = 2.0
+    e = 201
+    nu = 0.3
     q0 = 15
 
-    x, y = generate_points(l)
-    bc = generate_bc(x, y, l, q0)
+    # 网格划分
+    nx = 50
+    ny = 50
+
+    # 生成三角形内部点和边界条件
+    elastic_body = Triangle(e, nu, l, q0)
+    x, y = elastic_body.discretize(nx, ny)
+    bc = elastic_body.boundary_conditions(x, y)
 
     x = torch.tensor(x, dtype=torch.float32).view(-1, 1).unsqueeze(0)
     y = torch.tensor(y, dtype=torch.float32).view(-1, 1).unsqueeze(0)

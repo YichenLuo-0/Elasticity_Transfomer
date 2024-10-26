@@ -2,17 +2,17 @@ import numpy as np
 import torch
 from torch.optim import LBFGS
 
-from data_generation import generate_points, generate_bc
+from cases.triangle import Triangle
 from loss_func import PinnLoss
 from pinnsfomer import PinnsFormer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# 三角形边长
+# 弹性体属性
 l = 2.0
-# 杨氏模量和泊松比
-E = 201
+e = 201
 nu = 0.3
+
 # 外力Q的取值范围
 q_min = 10
 q_max = 20
@@ -29,18 +29,24 @@ def random_choice(dataset_num, batch_size):
 
 
 def main():
-    # 生成数据点
-    x, y = generate_points(l)
+    # 网格划分
+    nx = 50
+    ny = 50
 
     # 训练参数
     dataset_num = 1000
     epochs = 300
     batch_size = 10
 
+    # 生成三角形内部点
+    elastic_body = Triangle(e, nu, l, q_min)
+    x, y = elastic_body.discretize(nx, ny)
+
     # 生成边界条件数据
     bc = []
     for q0 in np.arange(q_min, q_max, (q_max - q_min) / dataset_num):
-        bc_ = generate_bc(x, y, l, q0)
+        elastic_body.set_load(q0)
+        bc_ = elastic_body.boundary_conditions(x, y)
         bc.append(bc_)
     bc = torch.tensor(bc, dtype=torch.float32, requires_grad=False)
 
@@ -51,9 +57,9 @@ def main():
     y_copy = y.repeat(dataset_num, 1, 1).requires_grad_(False)
 
     # 初始化网络和优化器
-    pinn = PinnsFormer(d_model=64, d_hidden=64, N=2, heads=2, E=E, nu=nu).to(device)
+    pinn = PinnsFormer(d_model=64, d_hidden=64, N=2, heads=2, E=e, nu=nu).to(device)
     optimizer = LBFGS(pinn.parameters(), lr=1e-1, line_search_fn='strong_wolfe')
-    loss_func = PinnLoss(E)
+    loss_func = PinnLoss(e)
 
     # 训练
     for epoch in range(epochs):
