@@ -92,7 +92,7 @@ class Decoder(nn.Module):
 
 
 class PinnsFormer(nn.Module):
-    def __init__(self, d_model, d_hidden, N, heads, E, nu):
+    def __init__(self, d_model, d_hidden, n, heads, e, nu):
         super(PinnsFormer, self).__init__()
         self.coord_encoding = nn.Linear(2, d_model)
         self.bc_embedding = nn.Sequential(
@@ -105,8 +105,8 @@ class PinnsFormer(nn.Module):
             ]
         )
 
-        self.encoder = Encoder(d_model, N, heads)
-        self.decoder = Decoder(d_model, N, heads)
+        self.encoder = Encoder(d_model, n, heads)
+        self.decoder = Decoder(d_model, n, heads)
         self.linear_out = nn.Sequential(
             *[
                 nn.Linear(d_model, d_hidden),
@@ -117,9 +117,9 @@ class PinnsFormer(nn.Module):
             ]
         )
 
-        self.E = E
+        self.e = e
         self.nu = nu
-        self.G = E / (2 * (1 + nu))
+        self.G = e / (2 * (1 + nu))
 
     def forward(self, x, y, bc):
         coord = torch.cat([x, y], dim=-1)
@@ -146,7 +146,7 @@ class PinnsFormer(nn.Module):
         gamma_xy = du_dy + dv_dx
 
         # Calculate the stress
-        sigma_x = ((self.E * epsilon_x) + (self.nu * self.E * epsilon_y)) / (1 - (self.nu ** 2))
-        sigma_y = ((self.E * epsilon_y) + (self.nu * self.E * epsilon_x)) / (1 - (self.nu ** 2))
+        sigma_x = ((self.e * epsilon_x) + (self.nu * self.e * epsilon_y)) / (1 - (self.nu ** 2))
+        sigma_y = ((self.e * epsilon_y) + (self.nu * self.e * epsilon_x)) / (1 - (self.nu ** 2))
         tau_xy = self.G * gamma_xy
         return u, v, epsilon_x, epsilon_y, gamma_xy, sigma_x, sigma_y, tau_xy

@@ -10,7 +10,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # 弹性体属性
 l = 2.0
-e = 201
+e = 20
 nu = 0.3
 
 # 外力Q的取值范围
@@ -40,15 +40,35 @@ def main():
 
     # 生成三角形内部点
     elastic_body = Triangle(e, nu, l, q_min)
-    x, y = elastic_body.discretize(nx, ny)
+    x, y = elastic_body.geometry(nx, ny)
 
-    # 生成边界条件数据
     bc = []
+    u_gt = []
+    v_gt = []
+    sigma_x_gt = []
+    sigma_y_gt = []
+    tau_xy_gt = []
+
+    # 生成边界条件和真实值
     for q0 in np.arange(q_min, q_max, (q_max - q_min) / dataset_num):
         elastic_body.set_load(q0)
         bc_ = elastic_body.boundary_conditions(x, y)
+        u_gt_, v_gt_, sigma_x_gt_, sigma_y_gt_, tau_xy_gt_ = elastic_body.ground_truth(x, y)
+
         bc.append(bc_)
+        u_gt.append(u_gt_)
+        v_gt.append(v_gt_)
+        sigma_x_gt.append(sigma_x_gt_)
+        sigma_y_gt.append(sigma_y_gt_)
+        tau_xy_gt.append(tau_xy_gt_)
+
+    # 转换为张量
     bc = torch.tensor(bc, dtype=torch.float32, requires_grad=False)
+    u_gt = torch.tensor(u_gt, dtype=torch.float32, requires_grad=False)
+    v_gt = torch.tensor(v_gt, dtype=torch.float32, requires_grad=False)
+    sigma_x_gt = torch.tensor(sigma_x_gt, dtype=torch.float32, requires_grad=False)
+    sigma_y_gt = torch.tensor(sigma_y_gt, dtype=torch.float32, requires_grad=False)
+    tau_xy_gt = torch.tensor(tau_xy_gt, dtype=torch.float32, requires_grad=False)
 
     # 转换为PyTorch张量
     x = torch.tensor(x, dtype=torch.float32).view(-1, 1)
@@ -57,7 +77,7 @@ def main():
     y_copy = y.repeat(dataset_num, 1, 1).requires_grad_(False)
 
     # 初始化网络和优化器
-    pinn = PinnsFormer(d_model=64, d_hidden=64, N=2, heads=2, E=e, nu=nu).to(device)
+    pinn = PinnsFormer(d_model=64, d_hidden=64, n=2, heads=2, e=e, nu=nu).to(device)
     optimizer = LBFGS(pinn.parameters(), lr=1e-1, line_search_fn='strong_wolfe')
     loss_func = PinnLoss(e)
 
@@ -65,15 +85,22 @@ def main():
     for epoch in range(epochs):
         # 随机选择一个batch
         indices = random_choice(dataset_num, batch_size)
+        # 选择数据
         x_batch = x_copy[indices].to(device).requires_grad_(True)
         y_batch = y_copy[indices].to(device).requires_grad_(True)
         bc_batch = bc[indices].to(device)
+        u_gt_batch = u_gt[indices].to(device)
+        v_gt_batch = v_gt[indices].to(device)
+        sigma_x_gt_batch = sigma_x_gt[indices].to(device)
+        sigma_y_gt_batch = sigma_y_gt[indices].to(device)
+        tau_xy_gt_batch = tau_xy_gt[indices].to(device)
 
         def closure():
             # 前向传播
             u, v, epsilon_x, epsilon_y, gamma_xy, sigma_x, sigma_y, tau_xy = pinn(x_batch, y_batch, bc_batch)
             # 计算损失
-            loss = loss_func(elastic_body, x_batch, y_batch, u, v, sigma_x, sigma_y, tau_xy, bc_batch)
+            loss = loss_func(x_batch, y_batch, u, v, sigma_x, sigma_y, tau_xy, bc_batch, u_gt_batch, v_gt_batch,
+                             sigma_x_gt_batch, sigma_y_gt_batch, tau_xy_gt_batch)
             print("Epoch: ", epoch, ", Loss: ", loss.cpu().detach().numpy())
             # 梯度下降
             optimizer.zero_grad()

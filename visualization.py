@@ -49,7 +49,7 @@ def main():
 
     # 生成三角形内部点和边界条件
     elastic_body = Triangle(e, nu, l, q0)
-    x, y = elastic_body.discretize(nx, ny)
+    x, y = elastic_body.geometry(nx, ny)
     bc = elastic_body.boundary_conditions(x, y)
 
     x = torch.tensor(x, dtype=torch.float32).view(-1, 1).unsqueeze(0)
