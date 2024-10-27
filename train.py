@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch.optim import LBFGS
 
-from cases.case_triangle import Triangle
+from cases.triangle.triangle import Triangle
 from loss_func import PinnLoss
 from pinnsfomer import PinnsFormer
 
@@ -100,18 +100,19 @@ def main():
             # Forward pass
             u, v, epsilon_x, epsilon_y, gamma_xy, sigma_x, sigma_y, tau_xy = pinn(x_batch, y_batch, bc_batch)
             # Calculate the loss
-            loss = loss_func(x_batch, y_batch, u, v, sigma_x, sigma_y, tau_xy, bc_batch, u_gt_batch, v_gt_batch,
-                             sigma_x_gt_batch, sigma_y_gt_batch, tau_xy_gt_batch)
+            loss = loss_func(x_batch, y_batch, u, v, sigma_x, sigma_y, tau_xy, bc_batch,
+                             u_gt_batch, v_gt_batch, sigma_x_gt_batch, sigma_y_gt_batch, tau_xy_gt_batch)
             print("Epoch: ", epoch, ", Loss: ", loss.cpu().detach().numpy())
             # Backward pass
             optimizer.zero_grad()
             loss.backward()
             return loss
 
+        # Optimize the network
         optimizer.step(closure)
 
     # Save the model
-    torch.save(pinn, "./pinn.pth")
+    torch.save(pinn, "cases/triangle/pinn.pth")
 
 
 if __name__ == "__main__":
