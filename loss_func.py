@@ -7,14 +7,15 @@ class PinnLoss:
         return
 
     def __call__(self, x, y, u, v, sigma_x, sigma_y, tau_xy, bc, u_gt, v_gt, sigma_x_gt, sigma_y_gt, tau_xy_gt):
-        pde_loss = self.cauchy_equilibrium(x, y, sigma_x, sigma_y, tau_xy)
-        bc_loss = self.disp_boundary(u, v, bc) + self.force_boundary(sigma_x, sigma_y, tau_xy, bc)
+        # pde_loss = self.cauchy_equilibrium(x, y, sigma_x, sigma_y, tau_xy)
+        # bc_loss = self.disp_boundary(u, v, bc) + self.force_boundary(sigma_x, sigma_y, tau_xy, bc)
         data_loss = self.data_loss(u, v, sigma_x, sigma_y, tau_xy, u_gt, v_gt, sigma_x_gt, sigma_y_gt, tau_xy_gt)
-        return pde_loss + bc_loss + data_loss
+        return data_loss
 
     def data_loss(self, u, v, sigma_x, sigma_y, tau_xy, u_gt, v_gt, sigma_x_gt, sigma_y_gt, tau_xy_gt):
-        return (torch.sum((u - u_gt) ** 2) + torch.sum((v - v_gt) ** 2) + torch.sum((sigma_x - sigma_x_gt) ** 2)
-                + torch.sum((sigma_y - sigma_y_gt) ** 2) + torch.sum((tau_xy - tau_xy_gt) ** 2))
+        # return torch.sum((u - u_gt) ** 2) + torch.sum((v - v_gt) ** 2) +
+        return (torch.sum((sigma_x - sigma_x_gt) ** 2) + torch.sum((sigma_y - sigma_y_gt) ** 2)
+                + torch.sum((tau_xy - tau_xy_gt) ** 2))
 
     def cauchy_equilibrium(self, x, y, sigma_x, sigma_y, tau_xy):
         grad_outputs = torch.ones_like(x)
@@ -43,7 +44,8 @@ class PinnLoss:
         vs_bc = vs[mask]
 
         # Loss: (u_bc - us_bc) * E, (v_bc - vs_bc) * E
-        # 由于位移边界的值非常小，我们需要将其和杨氏模量相乘，以增加其影响
+        # Since the displacement boundary values are very small,
+        # we need to multiply them by the Young's modulus to increase their influence
         bc1 = (u_bc - us_bc) * self.e
         bc2 = (v_bc - vs_bc) * self.e
         return torch.sum(bc1 ** 2) + torch.sum(bc2 ** 2)

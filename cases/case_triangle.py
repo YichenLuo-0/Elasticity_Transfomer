@@ -45,8 +45,6 @@ class Triangle(ElasticBody):
         sigma_x = -(self.q0 / self.l) * (x - (2 * y))
         sigma_y = (self.q0 / self.l) * x
         tau_xy = (self.q0 / self.l) * y
-
-        print(sigma_x.shape)
         return u, v, sigma_x, sigma_y, tau_xy
 
     def set_load(self, q0):
