@@ -36,13 +36,6 @@ def generate_fig(x, y, sigma_x, sigma_y, tau_xy):
     return fig
 
 
-def ground_truth(x, y, l, q0):
-    sigma_x = -(q0 / l) * (x - (2 * y))
-    sigma_y = (q0 / l) * x
-    tau_xy = (q0 / l) * y
-    return sigma_x, sigma_y, tau_xy
-
-
 def main():
     # 弹性体属性
     l = 2.0
@@ -66,7 +59,7 @@ def main():
     # pinn = PinnsFormer(d_model=64, d_hidden=64, N=4, heads=2)
     pinn = torch.load("./pinn.pth").cpu()
     sigma_x, sigma_y, tau_xy = pinn(x, y, bc)
-    sigma_x_gt, sigma_y_gt, tau_xy_gt = ground_truth(x, y, l, q0)
+    sigma_x_gt, sigma_y_gt, tau_xy_gt = elastic_body.ground_truth(x, y, l, q0)
 
     x = x.view(-1).detach().numpy()
     y = y.view(-1).detach().numpy()

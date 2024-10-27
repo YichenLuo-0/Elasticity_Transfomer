@@ -30,8 +30,8 @@ def random_choice(dataset_num, batch_size):
 
 def main():
     # 网格划分
-    nx = 50
-    ny = 50
+    nx = 40
+    ny = 40
 
     # 训练参数
     dataset_num = 1000
@@ -73,7 +73,7 @@ def main():
             # 前向传播
             u, v, epsilon_x, epsilon_y, gamma_xy, sigma_x, sigma_y, tau_xy = pinn(x_batch, y_batch, bc_batch)
             # 计算损失
-            loss = loss_func(x_batch, y_batch, u, v, sigma_x, sigma_y, tau_xy, bc_batch)
+            loss = loss_func(elastic_body, x_batch, y_batch, u, v, sigma_x, sigma_y, tau_xy, bc_batch)
             print("Epoch: ", epoch, ", Loss: ", loss.cpu().detach().numpy())
             # 梯度下降
             optimizer.zero_grad()

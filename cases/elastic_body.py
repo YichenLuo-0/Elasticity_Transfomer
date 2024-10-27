@@ -13,3 +13,7 @@ class ElasticBody:
     @abstractmethod
     def boundary_conditions(self, x, y):
         raise NotImplementedError("This method should be overridden by subclasses.")
+
+    @abstractmethod
+    def ground_truth(self, x, y):
+        raise NotImplementedError("This method should be overridden by subclasses.")

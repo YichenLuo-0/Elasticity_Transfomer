@@ -54,6 +54,13 @@ class Triangle(ElasticBody):
                 bc[i] = np.array([0, 0, 0, 0, 0, 0, 0])
         return bc
 
+    @overrides
+    def ground_truth(self, x, y):
+        sigma_x = -(self.q0 / self.l) * (x - (2 * y))
+        sigma_y = (self.q0 / self.l) * x
+        tau_xy = (self.q0 / self.l) * y
+        return sigma_x, sigma_y, tau_xy
+
     def set_load(self, q0):
         self.q0 = q0
         return self

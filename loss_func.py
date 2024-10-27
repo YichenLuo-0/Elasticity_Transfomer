@@ -6,10 +6,17 @@ class PinnLoss:
         self.E = E
         return
 
-    def __call__(self, x, y, u, v, sigma_x, sigma_y, tau_xy, bc):
+    def __call__(self,  x, y, u, v, sigma_x, sigma_y, tau_xy, bc):
         pde_loss = self.cauchy_equilibrium(x, y, sigma_x, sigma_y, tau_xy)
         bc_loss = self.disp_boundary(u, v, bc) + self.force_boundary(sigma_x, sigma_y, tau_xy, bc)
+        data_loss = self.data_loss(elastic_body, x, y, u, v, sigma_x, sigma_y, tau_xy)
         return pde_loss + bc_loss
+
+    def data_loss(self, elastic_body, x, y, u, v, sigma_x, sigma_y, tau_xy):
+        sigma_x_gt, sigma_y_gt, tau_xy_gt = elastic_body.ground_truth(x, y)
+        return (torch.sum((sigma_x - sigma_x_gt) ** 2)
+                + torch.sum((sigma_y - sigma_y_gt) ** 2)
+                + torch.sum((tau_xy - tau_xy_gt) ** 2))
 
     def cauchy_equilibrium(self, x, y, sigma_x, sigma_y, tau_xy):
         grad_outputs = torch.ones_like(x)
