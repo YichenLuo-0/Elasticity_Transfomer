@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch.optim import LBFGS
 
-from cases.triangle import Triangle
+from cases.case_triangle import Triangle
 from loss_func import PinnLoss
 from pinnsfomer import PinnsFormer
 

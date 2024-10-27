@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from cases.triangle import Triangle
+from cases.case_triangle import Triangle
 
 
 def generate_fig(x, y, sigma_x, sigma_y, tau_xy):
