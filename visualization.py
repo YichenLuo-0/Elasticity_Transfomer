@@ -8,7 +8,7 @@ from cases.triangle.triangle import Triangle
 l = 2.0
 e = 20.1
 nu = 0.3
-q0 = 15
+q0 = 12
 
 
 def generate_fig(x, y, sigma_x, sigma_y, tau_xy, title):
@@ -43,14 +43,14 @@ def generate_fig(x, y, sigma_x, sigma_y, tau_xy, title):
 
 def main():
     # Mesh size of the elastic body
-    nx = 40
-    ny = 40
+    nx = 50
+    ny = 50
 
     # Initialize the elastic body and generate the boundary conditions and ground truth
-    elastic_body = Triangle(e, nu, l, q0)
+    elastic_body = Triangle(e, nu, l)
     x, y = elastic_body.geometry(nx, ny)
     bc = elastic_body.boundary_conditions(x, y)
-    u_gt, v_gt, sigma_x_gt, sigma_y_gt, tau_xy_gt = elastic_body.ground_truth(x, y)
+    u_gt, v_gt, sigma_x_gt, sigma_y_gt, tau_xy_gt = elastic_body.get_ground_truth(x, y)
 
     # Convert the data to tensors
     x = torch.tensor(x, dtype=torch.float32).view(-1, 1).unsqueeze(0).requires_grad_(True)
@@ -59,8 +59,12 @@ def main():
 
     # Use the trained model to predict the stress distribution
     # pinn = PinnsFormer(d_model=64, d_hidden=64, n=4, heads=2, e=e, nu=nu)
-    pinn = torch.load("cases/triangle/pinn.pth").cpu()
-    u, v, epsilon_x, epsilon_y, gamma_xy, sigma_x, sigma_y, tau_xy = pinn(x, y, bc)
+    pinn = torch.load("cases/triangle/pinn_3.pth").cpu()
+    pred = pinn(x, y, bc)
+
+    sigma_x = pred[:, :, 2:3]
+    sigma_y = pred[:, :, 3:4]
+    tau_xy = pred[:, :, 4:5]
 
     # Visualize the results
     x = x.view(-1).detach().numpy()
